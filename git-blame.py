@@ -51,7 +51,7 @@ template_one = '''
         <div class="phantom">
             <span class="message">
                 <strong>Git Blame</strong> ({user})
-                {date} {time} |
+                {date} {time}|
                 {sha}
                 <a href="copy-{sha}">[Copy]</a>
                 <a href="show-{sha}">[Show]</a>
@@ -64,24 +64,9 @@ template_one = '''
 stylesheet_all = '''
     <style>
         div.phantom {
-            padding: 0;
+            padding-right: 4px;
             margin: 0;
             background-color: color(var(--bluish) blend(var(--background) 30%));
-        }
-        div.phantom .user {
-            width: 10em;
-        }
-        div.phantom a.close {
-            padding: 0.35rem 0.7rem 0.45rem 0.8rem;
-            position: relative;
-            bottom: 0.05rem;
-            font-weight: bold;
-        }
-        html.dark div.phantom a.close {
-            background-color: #00000018;
-        }
-        html.light div.phantom a.close {
-            background-color: #ffffff18;
         }
     </style>
 '''
@@ -89,11 +74,8 @@ stylesheet_all = '''
 template_all = '''
     <body id="inline-git-blame">
         {stylesheet}
-        <div class="phantom">
-            <span class="message">
-                {sha} (<span class="user">{user}</span> {date} {time})
-                <a class="close" href="close">''' + chr(0x00D7) + '''</a>
-            </span>
+        <div class="phantom"> 
+        {user} {date} 
         </div>
     </body>
 '''
@@ -207,11 +189,18 @@ class BlameCommand(sublime_plugin.TextCommand):
             phantoms.append(phantom)
         self.phantom_set.update(phantoms)
 
+def real_len(uchar):
+    base_len = len(uchar)
+    for cha in uchar:
+        if cha >= u'\u4e00' and cha<=u'\u9fa5':
+            base_len += 0.7
+    return int(base_len)    
+
 
 class BlameShowAllCommand(sublime_plugin.TextCommand):
 
     # The fixed length for author names
-    NAME_LENGTH = 10
+    NAME_LENGTH = 6
 
     def __init__(self, view):
         super().__init__(view)
@@ -311,11 +300,12 @@ class BlameShowAllCommand(sublime_plugin.TextCommand):
     def format_name(self, name):
         '''Formats author names so that widths of phantoms become equal.
         '''
-        ellipsis = '...'
-        if len(name) > self.NAME_LENGTH:
+        ellipsis = '..'
+        char_len = real_len(name)
+        if char_len > self.NAME_LENGTH:
             return name[:self.NAME_LENGTH] + ellipsis
         else:
-            return name + '.' * (self.NAME_LENGTH - len(name)) + ellipsis
+            return name + '.' * (self.NAME_LENGTH - char_len) + ellipsis
 
     def get_line_point(self, line):
         '''Get the point of specified line in a view.
